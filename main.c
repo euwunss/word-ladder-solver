@@ -15,60 +15,74 @@ typedef struct LadderNode_struct {
 } LadderNode;
 
 int countWordsOfLength(char* filename, int wordSize) { 
-    //---------------------------------------------------------
-    // TODO - write countWordsOfLength()    
-    //      open a file with name <filename> and count the 
-    //      number of words in the file that are exactly 
-    //      <wordSize> letters long, where a "word" is ANY set
-    //      of characters that falls between two whitespaces 
-    //      (or tabs, or newlines, etc.). 
-    //          return the count, if filename is valid
-    //          return -1 if the file cannot be opened
-    //---------------------------------------------------------
-    return 0; //modify this
+    FILE* infile = fopen(filename, "r");
+    if (!infile) {
+        printf("Error opening the file.\n");
+        return -1;
+    }
+
+    int count = 0, bufferSize = 50;
+    char buffer[bufferSize];
+    while (fscanf(infile, "%s", buffer)) {
+        count = (strlen(buffer) == wordSize) ? ++count : count;
+    }
+
+    fclose(infile);
+    return count;
 }
 
 bool buildWordArray(char* filename, char** words, int numWords, int wordSize) { 
-    //---------------------------------------------------------
-    // TODO - write buildWordArray()    
-    //      open a file with name <filename> and fill the 
-    //      pre-allocated word array <words> with only words
-    //      that are exactly <wordSize> letters long;
-    //      the file should contain exactly <numWords> words 
-    //      that are the correct number of letters; thus, 
-    //      <words> is pre-allocated as <numWords> char* ptrs, 
-    //      each pointing to a C-string of legnth <wordSize>+1;
-    //          return true iff the file is opened successfully
-    //                      AND the file contains exactly 
-    //                      <numWords> words of exactly 
-    //                      <wordSize> letters, and those words
-    //                      are stored in the <words> array
-    //          return false otherwise
-    //---------------------------------------------------------
-    return false;
+    FILE* infile = fopen(filename, "r");
+    if (!infile) {
+        printf("Error opening the file.\n");
+        return false;
+    }
+
+    int ind = 0;
+    int wordCount = 0;
+    char buffer[50];
+    while (fscanf(infile, "%s", buffer) == 1) {
+        if (strlen(buffer) == wordSize) {
+            strcpy(words[ind++], buffer);
+            wordCount++;
+        }
+    }
+
+    fclose(infile);
+    if (wordCount != numWords) {
+        printf("Error storing all words in an array.\n");
+        return false;
+    }
+
+    return true;
 }
 
 int findWord(char** words, char* aWord, int loInd, int hiInd) { 
-    //---------------------------------------------------------
-    // TODO - write findWord()
-    //          binary search for string <aWord> in an 
-    //          alphabetically sorted array of strings <words>, 
-    //          only between <loInd> & <hiInd>
-    //              return index of <aWord> if found
-    //              return -1 if not found b/w loInd & hiInd
-    //---------------------------------------------------------
-    return -1; // modify this line
+    int mid = (loInd + hiInd) / 2;
+    while (loInd <= hiInd) {
+        int cmpResult = strcmp(aWord, words[mid]);
+        if (cmpResult == 0) {
+            return mid;
+        }
+        else if (cmpResult < 0) {
+            hiInd = mid - 1;
+        }
+        else {
+            loInd = mid + 1;
+        }
+
+        mid = (loInd + hiInd) / 2;
+    }
+
+    return -1;
 }
 
 void freeWords(char** words, int numWords) {
-    //---------------------------------------------------------
-    // TODO - write freeWords()
-    //          free up all heap-allocated space for <words>,
-    //          which is an array of <numWords> C-strings
-    //           - free the space allocated for each C-string 
-    //           - then, free the space allocated for the array
-    //                  of pointers, <words>, itself
-    //---------------------------------------------------------
+    for (int i = 0; i < numWords; i++) {
+        free(words[i]);
+    }
+    free(words);
+    return;
 }
 
 void insertWordAtFront(WordNode** ladder, char* newWord) {
