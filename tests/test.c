@@ -472,6 +472,189 @@ bool test_getLadderHeight() {
 }
 
 
+// testing copyLadder()
+WordNode* copyLadder(WordNode* ladder) {
+    if (!ladder) {
+        return NULL;
+    }
+
+    WordNode* newLadder = (WordNode*)malloc(sizeof(WordNode));
+    WordNode* curr = newLadder;
+    newLadder->next = NULL;
+    newLadder->myWord = ladder->myWord;
+    ladder = ladder->next;
+
+    while (ladder) {
+        curr->next = (WordNode*)malloc(sizeof(WordNode));
+        curr->next->myWord = ladder->myWord;
+        curr = curr->next;
+        ladder = ladder->next;
+    } 
+    curr->next = NULL;
+    return newLadder;
+}
+
+bool test_copyLadder() {
+    // test for empty ladder
+    WordNode* ladder = NULL;
+    WordNode* newLadder = copyLadder(ladder);
+    printf(" Checking copyLadder() for an empty ladder:\n");
+    if (newLadder) {
+        printf("  ladder is empty\n");
+        printf("  expected return value: NULL\n");
+        printf("  actual return value: %p\n", newLadder);
+        return false;
+    }
+
+    // test for 1-word ladder
+    ladder = (WordNode*)malloc(sizeof(WordNode));
+    ladder->next = NULL;
+    ladder->myWord = (char*)malloc(sizeof(char) * 4);
+    strcpy(ladder->myWord, "dog");
+    newLadder = copyLadder(ladder);
+    if (!newLadder) {
+        printf("Error copying ladder.\n");
+        return false;
+    }
+
+    int expected = 1; // expected height of a copied ladder
+    int actual = getLadderHeight(newLadder);
+    printf(" Checking copyLadder() for a 1-word ladder:\n");
+    if (actual != expected || strcmp(newLadder->myWord, ladder->myWord) != 0 || newLadder->next != NULL) {
+        printf("  ladder has height of 1\n");
+        printf("  expected height of copied ladder: %d\n", expected);
+        printf("  actual height of copied ladder: %d\n", expected);
+        printf("  expected word in the ladder: %s\n", ladder->myWord);
+        printf("  actual word in the ladder: %s\n", newLadder->myWord);
+
+        free(ladder->myWord);
+        free(ladder);
+        free(newLadder);
+        return false;
+    }
+
+    // test for several words in a ladder
+    free(newLadder);
+
+    char* newWord = (char*)malloc(sizeof(char) * 6);
+    strcpy(newWord, "sleep");
+    insertWordAtFront(&ladder, newWord);
+    newWord = (char*)malloc(sizeof(char) * 7);
+    strcpy(newWord, "points");
+    insertWordAtFront(&ladder, newWord);
+    newWord = (char*)malloc(sizeof(char) * 8);
+    strcpy(newWord, "accepts");
+    insertWordAtFront(&ladder, newWord);
+    newWord = (char*)malloc(sizeof(char) * 9);
+    strcpy(newWord, "function");
+    insertWordAtFront(&ladder, newWord);
+
+    newLadder = copyLadder(ladder);
+    expected = 5;
+    actual = getLadderHeight(newLadder);
+    printf(" Checking copyLadder() for a 5-word ladder:\n");
+    if (actual != expected) {
+        printf("  ladder contains words function, accepts, points, sleep, dog");
+        printf("  expected ladder height: %d\n", expected);
+        printf("  actual ladder height: %d\n", actual);
+        printf("  newLadder contains words:\n");
+        WordNode* temp = newLadder;
+        while (temp) {
+            printf("%s  ", temp->myWord);
+            temp = temp->next;
+        }
+        printf("  ladder's front word is: %s\n", ladder->myWord);
+        printf("  newLadder's front word is: %s\n", newLadder->myWord);
+        WordNode* temp1 = ladder;
+        WordNode* temp2 = newLadder;
+        while (temp1 && temp2) {
+            ladder = ladder->next;
+            newLadder = newLadder->next;
+            free(temp1->myWord);
+            free(temp1);
+            free(temp2);
+            temp1 = ladder;
+            temp2 = newLadder;
+        }
+        return false;
+    }
+
+    WordNode* temp1 = ladder;
+    WordNode* temp2 = newLadder;
+    while (temp1 && temp2) {
+        ladder = ladder->next;
+        newLadder = newLadder->next;
+        free(temp1->myWord);
+        free(temp1);
+        free(temp2);
+        temp1 = ladder;
+        temp2 = newLadder;
+    }
+    return true;
+}
+
+
+// testing insertLadderAtBack()
+void insertLadderAtBack(LadderNode** list, WordNode* newLadder) {
+    LadderNode* newLadderNode = (LadderNode*)malloc(sizeof(LadderNode));
+    newLadderNode->topWord = newLadder;
+    newLadderNode->next = NULL;
+
+    if (!(*list)) {
+        *list = newLadderNode;
+        return;
+    }
+
+    LadderNode* curr = *list;
+    while (curr->next) {
+        curr = curr->next;
+    }
+    curr->next = newLadderNode;
+    return;
+}
+
+bool test_insertLadderAtBack() {
+    // test for empty ladder
+    LadderNode* list = NULL;
+    WordNode* newLadder = (WordNode*)malloc(sizeof(WordNode));
+    newLadder->next = NULL;
+    newLadder->myWord = (char*)malloc(sizeof(char) * 5);
+    strcpy(newLadder->myWord, "game");
+
+    char* newWord = (char*)malloc(sizeof(char) * 12);
+    strcpy(newWord, "interesting");
+    insertWordAtFront(&newLadder, newWord);
+    insertLadderAtBack(&list, newLadder);
+
+    if (!list || strcmp(list->topWord->myWord, "interesting") != 0 || strcmp(list->topWord->next->myWord, "game") != 0 || list->topWord->next->next) {
+        printf("  list is initially empty\n");
+        printf("  after insertion of ladder at back, it is not expected to point to NULL\n");
+        printf("  expected top word: interesting\n");
+        printf("  actual top word: %s\n", list->topWord->myWord);
+        WordNode* temp = newLadder;
+        while (temp) {
+            newLadder = newLadder->next;
+            free(temp->myWord);
+            free(temp);
+            temp = newLadder;
+        }
+        free(list);
+        return false;
+    }
+
+    WordNode* temp = newLadder;
+    while (temp) {
+        newLadder = newLadder->next;
+        free(temp->myWord);
+        free(temp);
+        temp = newLadder;
+    }
+    free(list);
+
+    return true;
+}
+
+
 int main() {
     printf("Word Ladder Solver Testing Suite.\n");
 
@@ -507,6 +690,18 @@ int main() {
     }
     printf("Testing getLadderHeight()...\n");
     if (test_getLadderHeight()) {
+        printf("  All tests PASSED!\n");
+    } else {
+        printf("  test FAILED.\n");
+    }
+    printf("Testing copyLadder()...\n");
+    if (test_copyLadder()) {
+        printf("  All tests PASSED!\n");
+    } else {
+        printf("  test FAILED.\n");
+    }
+    printf("Testing insertLadderAtBack()...\n");
+    if (test_insertLadderAtBack()) {
         printf("  All tests PASSED!\n");
     } else {
         printf("  test FAILED.\n");

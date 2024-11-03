@@ -103,39 +103,50 @@ int getLadderHeight(WordNode* ladder) {
 }
 
 WordNode* copyLadder(WordNode* ladder) {
-    //---------------------------------------------------------
-    // TODO - write copyLadder()
-    //          make a complete copy of <ladder> and return it;
-    //          the copy ladder must have new space allocated
-    //          for each [WordNode] in <ladder>, BUT the
-    //          C-string pointers to elements of the full word  
-    //          array can be reused; i.e. the actual words do 
-    //          NOT need another allocation here
-    //---------------------------------------------------------
-    return NULL; //modify this
+    if (!ladder) {
+        return NULL;
+    }
+
+    WordNode* newLadder = (WordNode*)malloc(sizeof(WordNode));
+    WordNode* curr = newLadder;
+    newLadder->next = NULL;
+    newLadder->myWord = ladder->myWord;
+    ladder = ladder->next;
+
+    while (ladder) {
+        curr->next = (WordNode*)malloc(sizeof(WordNode));
+        curr->next->myWord = ladder->myWord;
+        curr = curr->next;
+        ladder = ladder->next;
+    } 
+    curr->next = NULL;
+    return newLadder;
 }
 
 void freeLadder(WordNode* ladder) {
-    //---------------------------------------------------------
-    // TODO - write freeLadder()
-    //          free up all heap-allocated space for <ladder>;
-    //          this does NOT include the actual words, 
-    //          instead just free up the space that was 
-    //          allocated for each [WordNode]
-    //---------------------------------------------------------
+    WordNode* curr = ladder;
+    while (curr) {
+        ladder = ladder->next;
+        free(curr);
+    }
 }
 
 void insertLadderAtBack(LadderNode** list, WordNode* newLadder) {
-    //---------------------------------------------------------
-    // TODO - write insertLadderAtBack()
-    //          allocate space for a new [LadderNode], set its 
-    //          [topWord] subitem using <newLadder>; then, find
-    //          the back of <list> and append the newly created
-    //          [LadderNode] to the back; Note that <list> is a 
-    //          pointer-passed-by-pointer, since this function 
-    //          must handle the edge case where <list> is empty
-    //          and the new [LadderNode] becomes the head node
-    //---------------------------------------------------------
+    LadderNode* newLadderNode = (LadderNode*)malloc(sizeof(LadderNode));
+    newLadderNode->topWord = newLadder;
+    newLadderNode->next = NULL;
+
+    if (!(*list)) {
+        *list = newLadderNode;
+        return;
+    }
+
+    LadderNode* curr = *list;
+    while (curr->next) {
+        curr = curr->next;
+    }
+    curr->next = newLadderNode;
+    return;
 }
 
 WordNode* popLadderFromFront(LadderNode** list) {
