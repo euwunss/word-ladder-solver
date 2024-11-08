@@ -16,7 +16,7 @@ typedef struct LadderNode_struct {
     struct LadderNode_struct* next; 
 } LadderNode;
 
-// number of words of a specific size in a dictionary
+// testing countWordsOfLength()
 int countWordsOfLength(char* filename, int wordSize) { 
     FILE* infile = fopen(filename, "r");
     if (!infile) {
@@ -24,9 +24,9 @@ int countWordsOfLength(char* filename, int wordSize) {
         return -1;
     }
 
-    int count = 0, bufferSize = 50;
-    char buffer[bufferSize];
-    while (!feof(infile) && fscanf(infile, "%s", buffer)) {
+    int count = 0;
+    char buffer[50];
+    while (fscanf(infile, "%s", buffer) == 1) {
         count = (strlen(buffer) == wordSize) ? ++count : count;
     }
 
@@ -34,8 +34,7 @@ int countWordsOfLength(char* filename, int wordSize) {
     return count;
 }
 
-// checked for every word length in sample dictionary
-// and checked for returned value -1 if file cannot be opened
+// tests countWordsOfLength() for various word sizes and expected counts
 bool test_countWordsOfLength() {
     int wordSize = 3;
     int expected = 7;
@@ -105,7 +104,7 @@ bool test_countWordsOfLength() {
     printf(" Checking countWordsOfLength() for words of length %d in %s:\n", wordSize, filename1);
     actual = countWordsOfLength(filename1, wordSize);
     if (actual != expected) {
-        printf("%s file does not exist.\n", filename1);
+        printf("  %s file does not exist.\n", filename1);
         printf("  expected return value: %d\n", expected);
         printf("  actual return value: %d\n", actual);
         return false;
@@ -142,7 +141,7 @@ bool buildWordArray(char* filename, char** words, int numWords, int wordSize) {
     return true;
 }
 
-// testing building word array of same-length words from a file
+// tests buildWordArray() by verifying correct word population and array length
 bool test_buildWordArray() {
     char* filename = "sampleDict.txt";
     int numWords = 4;
@@ -168,6 +167,10 @@ bool test_buildWordArray() {
         }
         printf("\n");
         printf("  expected return value: %d, actual return value: %d\n", expected, actual);
+        for (int i = 0; i < numWords; i++) {
+            free(words[i]);
+        }
+        free(words);
         return false;
     }
 
@@ -176,12 +179,36 @@ bool test_buildWordArray() {
     }
     free(words);
 
-    // ADD MORE TESTS HERE FOR EXAMPLE IF FILE COULDNT BE OPENED
+    char* filename_not_found = "not_found.txt";
+    numWords = 4;
+    wordSize = 4;
+    words = (char**)malloc(sizeof(char*) * numWords);
+    for (int i = 0; i < numWords; i++) {
+        words[i] = (char*)malloc(sizeof(char) * (wordSize + 1));
+    }
+
+    expected = false;
+    actual = buildWordArray(filename_not_found, words, numWords, wordSize);
+    printf(" Checking buildWordArray() for a file that does not exist:\n");
+    if (actual != expected) {
+        printf("  file `file_not_found.txt` doesn't exist.\n");
+        printf("  expected return value: %d, actual return value: %d\n", expected, actual);
+        for (int i = 0; i < numWords; i++) {
+            free(words[i]);
+        }
+        free(words);
+        return false;
+    }
+
+    for (int i = 0; i < numWords; i++) {
+        free(words[i]);
+    }
+    free(words);
 
     return true;
 }
 
-// testing binary search in words array
+// testing findWord()
 int findWord(char** words, char* aWord, int loInd, int hiInd) { 
     int mid = (loInd + hiInd) / 2;
     while (loInd <= hiInd) {
@@ -202,8 +229,7 @@ int findWord(char** words, char* aWord, int loInd, int hiInd) {
     return -1;
 }
 
-// test when first letters are different
-// test when first letters are same
+// tests findWord() for different cases within a sorted words array
 bool test_findWord() {
     char* words[5] = {"board", "float", "great", "ground", "hello"};
     char* aWord = "great";
@@ -281,6 +307,7 @@ void freeWords(char** words, int numWords) {
     return;
 }
 
+// tests freeWords() by veryfying that Valgrind printf no memory leaks message
 bool test_freeWords() {
     int numWords = 15;
     int wordSize = 6;
@@ -310,6 +337,7 @@ void insertWordAtFront(WordNode** ladder, char* newWord) {
     return;
 }
 
+// tests insertWordAtFront() to ensure correct word insertion in a ladder
 bool test_insertWordAtFront() {
     int ladderSize = 0;
     WordNode* ladder = (WordNode*)malloc(sizeof(WordNode));
@@ -474,9 +502,7 @@ bool test_getLadderHeight() {
 
 // testing copyLadder()
 WordNode* copyLadder(WordNode* ladder) {
-    if (!ladder) {
-        return NULL;
-    }
+    if (!ladder) return NULL;
 
     WordNode* newLadder = (WordNode*)malloc(sizeof(WordNode));
     WordNode* curr = newLadder;
@@ -494,6 +520,7 @@ WordNode* copyLadder(WordNode* ladder) {
     return newLadder;
 }
 
+// tests copyLadder for copying word ladders
 bool test_copyLadder() {
     // test for empty ladder
     WordNode* ladder = NULL;
@@ -613,6 +640,7 @@ void insertLadderAtBack(LadderNode** list, WordNode* newLadder) {
     return;
 }
 
+// tests insertLadderAtBack() for insertion ladder into ladder list when it is both empty and non-empty
 bool test_insertLadderAtBack() {
     // test for empty ladder
     LadderNode* list = NULL;
@@ -626,6 +654,7 @@ bool test_insertLadderAtBack() {
     insertWordAtFront(&newLadder, newWord);
     insertLadderAtBack(&list, newLadder);
 
+    printf(" Checking insertLadderAtBack() for an empty list:\n");
     if (!list || strcmp(list->topWord->myWord, "interesting") != 0 || strcmp(list->topWord->next->myWord, "game") != 0 || list->topWord->next->next) {
         printf("  list is initially empty\n");
         printf("  after insertion of ladder at back, it is not expected to point to NULL\n");
@@ -642,6 +671,48 @@ bool test_insertLadderAtBack() {
         return false;
     }
 
+    // test for non-empty ladder list
+    WordNode* anotherLadder = (WordNode*)malloc(sizeof(WordNode));
+    anotherLadder->next = NULL;
+    anotherLadder->myWord = (char*)malloc(sizeof(char) * 7);
+    strcpy(anotherLadder->myWord, "ladder");
+
+    char* anotherWord = (char*)malloc(sizeof(char) * 5);
+    strcpy(anotherWord, "test");
+    insertWordAtFront(&anotherLadder, anotherWord);
+    insertLadderAtBack(&list, anotherLadder);
+
+    printf(" Checking insertLadderAtBack() for non-empty list:\n");
+    if (!list->next || strcmp(list->next->topWord->myWord, "test") != 0 || strcmp(list->next->topWord->next->myWord, "ladder") != 0 || list->next->topWord->next->next) {
+        printf("  failed to insert ladder at back for non-empty list.\n");
+        WordNode* temp = newLadder;
+        while (temp) {
+            newLadder = newLadder->next;
+            free(temp->myWord);
+            free(temp);
+            temp = newLadder;
+        }
+
+        temp = anotherLadder;
+        while (temp) {
+            anotherLadder = anotherLadder->next;
+            printf("%s ", temp->myWord);
+            free(temp->myWord);
+            free(temp);
+            temp = anotherLadder;
+        }
+        free(list);
+
+        LadderNode* ladderTemp = list;
+        while (ladderTemp) {
+            LadderNode* nextLadder = ladderTemp->next;
+            free(ladderTemp);
+            ladderTemp = nextLadder;
+        }
+
+        return false;
+    }
+
     WordNode* temp = newLadder;
     while (temp) {
         newLadder = newLadder->next;
@@ -649,12 +720,287 @@ bool test_insertLadderAtBack() {
         free(temp);
         temp = newLadder;
     }
-    free(list);
+
+    temp = anotherLadder;
+    while (temp) {
+        anotherLadder = anotherLadder->next;
+        free(temp->myWord);
+        free(temp);
+        temp = anotherLadder;
+    }
+    
+    LadderNode* ladderTemp = list;
+    while (ladderTemp) {
+        LadderNode* nextLadder = ladderTemp->next;
+        free(ladderTemp);
+        ladderTemp = nextLadder;
+    }
 
     return true;
 }
 
 
+void freeLadder(WordNode* ladder) {
+    WordNode* curr = ladder;
+    while (curr) {
+        ladder = ladder->next;
+        free(curr);
+        curr = ladder;
+    }
+}
+
+void freeLadderList(LadderNode* myList) {
+    LadderNode* curr = myList;
+    while (curr) {
+        myList = myList->next;
+        freeLadder(curr->topWord);
+        free(curr);
+        curr = myList;
+    }
+    return;
+}
+
+
+// testing popLadderFromList()
+WordNode* popLadderFromFront(LadderNode** list) {
+    if (!(*list)) {
+        return NULL;
+    }
+
+    LadderNode* frontLadderNode = *list;
+    *list = (*list)->next;
+    WordNode* frontWordNode = frontLadderNode->topWord;
+    free(frontLadderNode);
+    return frontWordNode;
+}
+
+// tests popLadderFromFront() by popping the front ladder from ladder list and veryfying it is removed properly and list is updated correctly 
+bool test_popLadderFromFront() {
+    LadderNode* list = NULL;
+
+    // test when list is empty
+    WordNode* popped = popLadderFromFront(&list);
+    printf(" Checking popLadderFromFront() for an empty list:\n");
+    if (popped) {
+        printf("  list is initially empty.\n");
+        printf("  expected value is NULL, but actual value is not NULL\n");
+        return false;
+    }
+    // create the first ladder
+    WordNode* newLadder = (WordNode*)malloc(sizeof(WordNode));
+    newLadder->myWord = (char*)malloc(sizeof(char) * 6);
+    strcpy(newLadder->myWord, "word1");
+    newLadder->next = NULL;
+    insertLadderAtBack(&list, newLadder);
+
+    newLadder = (WordNode*)malloc(sizeof(WordNode));
+    newLadder->myWord = (char*)malloc(sizeof(char) * 6);
+    strcpy(newLadder->myWord, "word2");
+    newLadder->next = NULL;
+    insertLadderAtBack(&list, newLadder);
+
+    // pop the first ladder
+    WordNode* poppedLadder = popLadderFromFront(&list);
+    printf(" Checking popLadderFromFront() for a non-empty list:\n");
+    if (!poppedLadder || strcmp(poppedLadder->myWord, "word1") != 0) {
+        printf("  expected front ladder word: word1\n");
+        if (poppedLadder) {
+            printf("  actual front ladder word: %s\n", poppedLadder->myWord);
+        } else {
+            printf("  actual front ladder word doens't exist, as the ladder is empty.\n");
+        }
+        free(poppedLadder->myWord);
+        free(poppedLadder->next->myWord);
+        freeLadder(poppedLadder);
+        freeLadderList(list);
+
+        return false;
+    }
+
+    if (!list || strcmp(list->topWord->myWord, "word2") != 0) {
+        printf("  expected list head's word: word2\n");
+        if (list) {
+            printf("  actual list head's word: %s\n", list->topWord->myWord);
+        }
+        else {
+            printf("  actual list head's word doesn't exist, as list is empty\n");
+        }
+        free(poppedLadder->myWord);
+        freeLadder(poppedLadder);
+        freeLadderList(list);
+        return false;
+    }
+
+    free(poppedLadder->myWord);
+    free(list->topWord->myWord);
+    freeLadder(poppedLadder);
+    freeLadderList(list);
+    
+    return true;
+}
+
+
+// testing freeLadderList() - valgrind check
+
+
+// testing findShortestWordLadder()
+WordNode* findShortestWordLadder(   char** words, 
+                                    bool* usedWord, 
+                                    int numWords, 
+                                    int wordSize, 
+                                    char* startWord, 
+                                    char* finalWord ) {
+
+    // initialize empty list of ladders and the first ladder with the starting word
+    LadderNode* myList = NULL;
+    WordNode* myLadder = NULL;
+    insertWordAtFront(&myLadder, startWord);
+    insertLadderAtBack(&myList, myLadder);
+
+    // find index of the startWord in the words array
+    int startWordInd = findWord(words, startWord, 0, numWords - 1);
+    if (startWordInd == -1) {
+        printf("Start word not found.\n");
+        freeLadderList(myList);
+        return NULL;
+    }
+    usedWord[startWordInd] = true;
+
+    // process each ladder in the list
+    while (myList) {
+        // pop the first ladder from myList for exploration
+        myLadder = popLadderFromFront(&myList);
+
+        // allocate memory for a copy of the current word at the top of myLadder
+        char* neighborWord = (char*)malloc(sizeof(char) * (wordSize + 1));
+        if (!neighborWord) {
+            printf("Error allocating memory for a neighbor word.\n");
+            return NULL;
+        }
+        strcpy(neighborWord, myLadder->myWord);
+        
+        // change each character in to form new words
+        for (int i = 0; i < wordSize; i++) {
+            char charBefore = neighborWord[i];
+
+            // replace with each letter from 'a' to 'z'
+            for (char c = 'a'; c <= 'z'; c++) {
+                if (neighborWord[i] == c) { // skip if the character is the same
+                    continue;
+                }
+                neighborWord[i] = c;
+
+                // check if the modified word exists in the dictionary and is unused
+                int neighborInd = findWord(words, neighborWord, 0, numWords - 1);
+                if (neighborInd != -1 && !usedWord[neighborInd]) {
+                    
+                    // check if the modified word matches the final word
+                    if (strcmp(words[neighborInd], finalWord) == 0) {
+                        insertWordAtFront(&myLadder, words[neighborInd]); // add finalWord to the ladder
+                        free(neighborWord);
+                        freeLadderList(myList);
+                        return myLadder; // return the found ladder
+                    }
+                    else {
+                        // create a copy of the current ladder and add the modified word
+                        WordNode* anotherLadder = copyLadder(myLadder);
+                        insertWordAtFront(&anotherLadder, words[neighborInd]);
+                        insertLadderAtBack(&myList, anotherLadder); // add the new ladder to the back of the list
+                        usedWord[neighborInd] = true; // mark word as used
+                    }
+                }
+                neighborWord[i] = charBefore;
+            }
+        }
+        free(neighborWord);
+        freeLadder(myLadder);
+    }
+
+    // if no ladder found, free all remaining ladders in myList and return NULL
+    freeLadderList(myList);
+    return NULL;
+}
+
+// tests findShortestWordLadder() by creating a testing words array and expected shortest word ladder
+bool test_findShortestWordLadder() {
+    int wordSize = 4;
+    int numWords = 6;
+    char** words = (char**)malloc(sizeof(char*) * numWords);
+    for (int i = 0; i < numWords; i++) {
+        words[i] = (char*)malloc(sizeof(char) * (wordSize + 1));
+    }
+    strcpy(words[0], "card");
+    strcpy(words[1], "cold");
+    strcpy(words[2], "cord");
+    strcpy(words[3], "gold");
+    strcpy(words[4], "ward");
+    strcpy(words[5], "warm");
+
+    bool usedWord[numWords];
+    for (int i = 0; i < numWords; i++) {
+        usedWord[i] = false;
+    }
+
+    char* startWord = words[0];
+    char* finalWord = words[3];
+
+    WordNode* shortestLadder = findShortestWordLadder(words, usedWord, numWords, wordSize, startWord, finalWord);
+
+    if (!shortestLadder) {
+        printf("  expected shortest ladder, but none found.\n");
+        freeWords(words, numWords);
+        return false;
+    }
+
+    const char* expectedLadder[] = {
+        "gold",
+        "cold",
+        "cord",
+        "card",
+    };
+    int expectedLadderSize = 4;
+
+    printf(" Checking findShortestWordLadder() for an array: card, cold, cord, gold, ward, warm, and startWord = cord, finalWord = gold\n");
+    WordNode* curr = shortestLadder;
+    int i = 0;
+    while (curr && i < expectedLadderSize) {
+        if (strcmp(curr->myWord, expectedLadder[i]) != 0) {
+            printf("  expected shortest ladder:\n");
+            for (int i = 0; i < expectedLadderSize - 1; i++) {
+                printf("%s, ", expectedLadder[i]);
+            }
+            printf("%s\n", expectedLadder[expectedLadderSize - 1]);
+
+            printf("  actual shortest ladder:\n");
+            WordNode* curr = shortestLadder;
+            while (curr->next) {
+                printf("%s, ", curr->myWord);
+                curr = curr->next;
+            }
+            printf("%s\n", curr->myWord);
+
+            freeWords(words, numWords);
+            freeLadder(shortestLadder);
+            return false;
+        }
+        curr = curr->next;
+        i++;
+    }
+
+    if (i != expectedLadderSize || curr) {
+        printf("  expected ladder height: %d, actual ladder height: %d\n", expectedLadderSize, i);
+        freeWords(words, numWords);
+        freeLadder(shortestLadder);
+        return false;
+    }
+
+    freeWords(words, numWords);
+    freeLadder(shortestLadder);
+    return true;
+}
+
+
+// calls the testing suite and outputs the result 
 int main() {
     printf("Word Ladder Solver Testing Suite.\n");
 
@@ -702,6 +1048,18 @@ int main() {
     }
     printf("Testing insertLadderAtBack()...\n");
     if (test_insertLadderAtBack()) {
+        printf("  All tests PASSED!\n");
+    } else {
+        printf("  test FAILED.\n");
+    }
+    printf("Testing popLadderFromFront()...\n");
+    if (test_popLadderFromFront()) {
+        printf("  All tests PASSED!\n");
+    } else {
+        printf("  test FAILED.\n");
+    }
+    printf("Testing findShortestWordLadder()...\n");
+    if (test_findShortestWordLadder()) {
         printf("  All tests PASSED!\n");
     } else {
         printf("  test FAILED.\n");
